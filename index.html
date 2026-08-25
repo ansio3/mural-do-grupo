@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mural do Grupo</title>
+<style>
+  :root{
+    --ink:#12181c;
+    --panel:#1b2329;
+    --panel-2:#232d34;
+    --paper:#f3ede0;
+    --amber:#e0a03a;
+    --amber-dim:#8a6423;
+    --red:#c1442c;
+    --line:#33414a;
+    --text:#f3ede0;
+    --text-dim:#9fb0b8;
+    --radius:2px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--text);
+    font-family:'Georgia', 'Times New Roman', serif;
+    min-height:100vh;
+    padding-bottom:70px;
+  }
+  .utility{ font-family: 'Courier New', monospace; letter-spacing:0.08em; text-transform:uppercase; }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 24px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  }
+  .brand{ display:flex; align-items:baseline; gap:10px; }
+  .brand .mark{ width:10px;height:10px;background:var(--amber); display:inline-block; transform: rotate(45deg); }
+  .brand h1{ font-size:20px; font-weight:400; letter-spacing:0.02em; }
+  .brand .tag{ font-size:11px; color:var(--text-dim); }
+  #userbar{ display:flex; align-items:center; gap:12px; font-size:12px; }
+  #userbar span{ color:var(--text-dim); }
+
+  button{
+    font-family:inherit; cursor:pointer; border:1px solid var(--amber-dim);
+    background:transparent; color:var(--amber); padding:9px 16px;
+    border-radius:var(--radius); font-size:13px; letter-spacing:0.03em;
+    transition: all .15s ease;
+  }
+  button:hover{ background:var(--amber); color:var(--ink); border-color:var(--amber); }
+  button.primary{ background:var(--amber); color:var(--ink); }
+  button.primary:hover{ background:#f0b658; }
+  button.ghost{ border-color:var(--line); color:var(--text-dim); padding:7px 12px; font-size:12px;}
+  button.ghost:hover{ background:var(--panel-2); color:var(--text); border-color:var(--line);}
+  button.small{ padding:5px 10px; font-size:11px; }
+  button:disabled{ opacity:0.4; cursor:not-allowed; }
+
+  /* ---------- AUTH ---------- */
+  #auth-screen{
+    max-width:380px; margin:80px auto; padding:36px;
+    background:var(--panel); border:1px solid var(--line);
+    position:relative;
+  }
+  #auth-screen::before{
+    content:''; position:absolute; top:-1px; left:-1px; right:-1px; height:3px;
+    background:linear-gradient(90deg, var(--amber), var(--red));
+  }
+  #auth-screen h2{ font-weight:400; font-size:20px; margin-bottom:6px; }
+  #auth-screen p.sub{ color:var(--text-dim); font-size:13px; margin-bottom:24px; }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:11px; color:var(--text-dim); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.08em; font-family:'Courier New', monospace;}
+  .field input{
+    width:100%; padding:11px 12px; background:var(--ink); border:1px solid var(--line);
+    color:var(--text); font-family:inherit; font-size:14px; border-radius:var(--radius);
+  }
+  .field input:focus{ outline:none; border-color:var(--amber); }
+  #auth-screen button.primary{ width:100%; padding:12px; margin-top:6px; font-size:14px;}
+  .switch-mode{ text-align:center; margin-top:18px; font-size:13px; color:var(--text-dim); }
+  .switch-mode a{ color:var(--amber); cursor:pointer; text-decoration:none; }
+  #auth-msg{ font-size:13px; margin-top:14px; padding:10px; border-radius:var(--radius); display:none; }
+  #auth-msg.show{ display:block; }
+  #auth-msg.error{ background:rgba(193,68,44,0.15); color:#e8917d; border:1px solid var(--red); }
+  #auth-msg.info{ background:rgba(224,160,58,0.12); color:var(--amber); border:1px solid var(--amber-dim); }
+
+  /* ---------- BOTTOM NAV ---------- */
+  #bottom-nav{
+    display:none; position:fixed; bottom:0; left:0; right:0;
+    background:var(--panel); border-top:1px solid var(--line);
+    justify-content:space-around; padding:8px 0 10px 0; z-index:50;
+  }
+  .nav-btn{
+    background:none; border:none; color:var(--text-dim); display:flex; flex-direction:column;
+    align-items:center; gap:3px; font-size:10px; font-family:'Courier New', monospace;
+    text-transform:uppercase; letter-spacing:0.03em; padding:4px 10px; position:relative;
+  }
+  .nav-btn .icon{ font-size:18px; }
+  .nav-btn.active{ color:var(--amber); }
+  .nav-btn:hover{ background:none; color:var(--amber); border:none; }
+  .nav-badge{
+    position:absolute; top:0; right:2px; background:var(--red); color:#fff;
+    border-radius:50%; width:15px; height:15px; font-size:9px; display:flex;
+    align-items:center; justify-content:center;
+  }
+
+  /* ---------- SCREENS ---------- */
+  .app-screen{ display:none; padding:24px; max-width:1200px; margin:0 auto; }
+  .app-screen.active{ display:block; }
+
+  .screen-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:22px; flex-wrap:wrap; gap:14px;}
+  .screen-head h2{ font-weight:400; font-size:24px; }
+  .screen-head .count{ font-family:'Courier New',monospace; font-size:12px; color:var(--text-dim); margin-top:4px;}
+
+  .toolbar{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; align-items:center; }
+  .toolbar input[type=text]{
+    padding:9px 12px; background:var(--panel); border:1px solid var(--line);
+    color:var(--text); font-family:inherit; font-size:13px; border-radius:var(--radius); flex:1; min-width:140px;
+  }
+  .toolbar select{
+    padding:9px 10px; background:var(--panel); border:1px solid var(--line);
+    color:var(--text); font-family:inherit; font-size:12px; border-radius:var(--radius);
+  }
+
+  #upload-box{
+    border:1px dashed var(--line); padding:16px; margin-bottom:24px;
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+  #upload-box input[type=file]{ color:var(--text-dim); font-size:13px; }
+  #upload-progress{ font-size:12px; color:var(--amber); font-family:'Courier New',monospace; display:none;}
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:20px; }
+  .photo-card{
+    background:var(--paper); padding:10px; position:relative;
+    box-shadow:0 6px 16px rgba(0,0,0,0.35);
+  }
+  .photo-card img{ width:100%; height:200px; object-fit:cover; display:block; background:#333;}
+  .photo-card .caption{
+    margin-top:8px; color:#1a1a1a; font-size:12px; display:flex; justify-content:space-between; align-items:center;
+    font-family:'Courier New', monospace;
+  }
+  .photo-card .caption .who{ font-weight:bold; }
+  .like-row{ display:flex; align-items:center; gap:8px; margin-top:6px; }
+  .like-btn{
+    border:1px solid var(--amber-dim); background:transparent; color:var(--amber-dim);
+    padding:4px 9px; font-size:12px; border-radius:var(--radius); cursor:pointer;
+  }
+  .like-btn.liked{ background:var(--amber-dim); color:var(--paper); }
+  .like-count{ font-family:'Courier New', monospace; font-size:11px; color:#3a3428; }
+  .delete-x{
+    border:none; background:none; color:#8a3a2c; font-size:11px; padding:2px 6px; cursor:pointer;
+    font-family:'Courier New', monospace;
+  }
+  .delete-x:hover{ text-decoration:underline; background:none; }
+
+  .comments-box{ margin-top:10px; padding-top:8px; border-top:1px dashed rgba(0,0,0,0.25); }
+  .comments-list{ max-height:100px; overflow-y:auto; margin-bottom:6px; }
+  .comment-item{
+    font-family:'Courier New', monospace; font-size:11px; color:#3a3428;
+    margin-bottom:5px; line-height:1.4; display:flex; align-items:center; gap:6px; justify-content:space-between;
+  }
+  .comment-item .c-who{ font-weight:bold; color:#1a1a1a; }
+  .comment-item audio{ height:26px; max-width:150px; }
+  .comment-form{ display:flex; gap:6px; margin-top:6px; }
+  .comment-form input[type=text]{
+    flex:1; font-family:inherit; font-size:11px; padding:6px 8px;
+    border:1px solid rgba(0,0,0,0.25); border-radius:var(--radius);
+    background:rgba(255,255,255,0.5); color:#1a1a1a;
+  }
+  .comment-form button{
+    padding:6px 9px; font-size:11px; border:1px solid var(--amber-dim);
+    background:var(--amber); color:var(--ink);
+  }
+  .comment-form button.rec{ background:transparent; color:var(--amber-dim); }
+  .comment-form button.rec.recording{ background:var(--red); color:#fff; border-color:var(--red); }
+
+  .empty-state{ text-align:center; padding:60px 20px; color:var(--text-dim); }
+  .empty-state .mark-big{ font-size:30px; margin-bottom:10px; }
+
+  /* ---------- MESSAGES ---------- */
+  #messages-list-view{ display:block; }
+  #messages-thread-view{ display:none; }
+  .conv-row{
+    display:flex; align-items:center; justify-content:space-between; padding:14px;
+    background:var(--panel); border:1px solid var(--line); margin-bottom:8px; cursor:pointer;
+  }
+  .conv-row:hover{ background:var(--panel-2); }
+  .conv-row .name{ font-size:14px; }
+  .conv-row .badge{ background:var(--amber); color:var(--ink); border-radius:50%; width:20px; height:20px; font-size:11px; display:flex; align-items:center; justify-content:center; font-family:'Courier New', monospace;}
+
+  #chat-box, #thread-box{
+    background:var(--panel); border:1px solid var(--line);
+    display:flex; flex-direction:column; height:60vh; max-height:520px;
+  }
+  #chat-messages, #thread-messages{
+    flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px;
+  }
+  .chat-msg{
+    max-width:75%; padding:8px 12px; border-radius:var(--radius);
+    background:var(--panel-2); font-size:13px; line-height:1.4; align-self:flex-start;
+  }
+  .chat-msg.mine{ align-self:flex-end; background:var(--amber-dim); color:var(--ink); }
+  .chat-msg .who{
+    display:block; font-family:'Courier New', monospace; font-size:10px;
+    color:var(--text-dim); margin-bottom:3px; letter-spacing:0.05em;
+  }
+  .chat-msg.mine .who{ color:rgba(18,24,28,0.6); }
+  #chat-input-row, #thread-input-row{ display:flex; gap:10px; padding:12px; border-top:1px solid var(--line); }
+  #chat-input-row input, #thread-input-row input{
+    flex:1; padding:10px 12px; background:var(--ink); border:1px solid var(--line);
+    color:var(--text); font-family:inherit; font-size:14px; border-radius:var(--radius);
+  }
+  #chat-input-row input:focus, #thread-input-row input:focus{ outline:none; border-color:var(--amber); }
+
+  .people-list{ margin-top:20px; }
+  .people-list h3{ font-size:14px; color:var(--text-dim); margin-bottom:10px; font-weight:400; }
+  .person-row{
+    display:flex; align-items:center; justify-content:space-between; padding:12px;
+    background:var(--panel); border:1px solid var(--line); margin-bottom:6px;
+  }
+
+  /* ---------- NOTIFICATIONS ---------- */
+  .notif-item{
+    padding:12px 14px; background:var(--panel); border:1px solid var(--line); margin-bottom:8px;
+    font-size:13px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .notif-item.unread{ border-left:3px solid var(--amber); }
+  .notif-item .time{ font-family:'Courier New', monospace; font-size:10px; color:var(--text-dim); }
+
+  /* ---------- PROFILE ---------- */
+  #profile-screen .field{ max-width:340px; }
+  .my-posts-grid{ margin-top:24px; }
+
+  @media (max-width:600px){
+    header{ padding:14px 16px; }
+    .app-screen{ padding:16px; }
+    #auth-screen{ margin:40px 16px; padding:24px; }
+    #bottom-nav{ display:flex; }
+  }
+  @media (min-width:601px){
+    #bottom-nav{ display:flex; position:static; border-top:none; border-bottom:1px solid var(--line); justify-content:flex-start; gap:24px; padding:12px 24px; }
+    body{ padding-bottom:0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="mark"></span>
+    <div>
+      <h1>Mural do Grupo</h1>
+      <div class="tag utility">galeria privada</div>
+    </div>
+  </div>
+  <div id="userbar" style="display:none;">
+    <span id="user-email"></span>
+    <button class="ghost" id="logout-btn">Sair</button>
+  </div>
+</header>
+
+<!-- ===== AUTH ===== -->
+<div id="auth-screen">
+  <h2 id="auth-title">Entrar</h2>
+  <p class="sub" id="auth-sub">Acesse com sua conta para ver e publicar fotos.</p>
+  <div class="field">
+    <label>E-mail</label>
+    <input type="email" id="email-input" placeholder="voce@exemplo.com">
+  </div>
+  <div class="field">
+    <label>Senha</label>
+    <input type="password" id="password-input" placeholder="••••••••">
+  </div>
+  <button class="primary" id="auth-submit-btn">Entrar</button>
+  <div id="auth-msg"></div>
+  <div class="switch-mode">
+    <span id="switch-text">Ainda não tem conta?</span> <a id="switch-link">Cadastre-se</a>
+  </div>
+</div>
+
+<!-- ===== BOTTOM NAV ===== -->
+<nav id="bottom-nav" style="display:none;">
+  <button class="nav-btn active" data-screen="home"><span class="icon">⌂</span>Início</button>
+  <button class="nav-btn" data-screen="messages"><span class="icon">✉</span>Mensagens</button>
+  <button class="nav-btn" data-screen="notifications"><span class="icon">◆</span>Notificações<span class="nav-badge" id="notif-badge" style="display:none;">0</span></button>
+  <button class="nav-btn" data-screen="profile"><span class="icon">☺</span>Perfil</button>
+</nav>
+
+<!-- ===== HOME ===== -->
+<div class="app-screen active" id="home-screen">
+  <div class="screen-head">
+    <div>
+      <h2>Fotos do grupo</h2>
+      <div class="count utility" id="photo-count">0 fotos</div>
+    </div>
+  </div>
+
+  <div id="upload-box">
+    <input type="file" id="file-input" accept="image/*">
+    <button class="primary" id="upload-btn">Publicar foto</button>
+    <span id="upload-progress" class="utility"></span>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="search-input" placeholder="Buscar por pessoa...">
+    <select id="sort-select">
+      <option value="recente">Mais recentes</option>
+      <option value="curtidas">Mais curtidas</option>
+    </select>
+  </div>
+
+  <div class="grid" id="photo-grid"></div>
+  <div class="empty-state" id="empty-state" style="display:none;">
+    <div class="mark-big">✦</div>
+    <p>Nenhuma foto ainda. Seja o primeiro a publicar.</p>
+  </div>
+</div>
+
+<!-- ===== MESSAGES ===== -->
+<div class="app-screen" id="messages-screen">
+  <div id="messages-list-view">
+    <div class="screen-head"><h2>Mensagens</h2></div>
+    <button class="ghost" id="open-general-chat-btn" style="width:100%; text-align:left; margin-bottom:16px;">💬 Chat geral do grupo</button>
+    <div class="people-list">
+      <h3>Conversar com alguém</h3>
+      <div id="people-container"></div>
+    </div>
+  </div>
+
+  <div id="messages-thread-view">
+    <div class="screen-head">
+      <h2 id="thread-title">Conversa</h2>
+      <button class="ghost" id="thread-back-btn">← Voltar</button>
+    </div>
+    <div id="thread-box">
+      <div id="thread-messages"></div>
+      <div id="thread-input-row">
+        <input type="text" id="thread-input" placeholder="Escrever uma mensagem...">
+        <button class="primary" id="thread-send-btn">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="general-chat-view" style="display:none;">
+    <div class="screen-head">
+      <h2>Chat geral</h2>
+      <button class="ghost" id="general-chat-back-btn">← Voltar</button>
+    </div>
+    <div id="chat-box">
+      <div id="chat-messages"></div>
+      <div id="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Escrever uma mensagem...">
+        <button class="primary" id="chat-send-btn">Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NOTIFICATIONS ===== -->
+<div class="app-screen" id="notifications-screen">
+  <div class="screen-head"><h2>Notificações</h2></div>
+  <div id="notif-list"></div>
+  <div class="empty-state" id="notif-empty" style="display:none;">
+    <div class="mark-big">◆</div>
+    <p>Nenhuma novidade por enquanto.</p>
+  </div>
+</div>
+
+<!-- ===== PROFILE ===== -->
+<div class="app-screen" id="profile-screen">
+  <div class="screen-head"><h2>Perfil</h2></div>
+  <div class="field">
+    <label>Nome de exibição</label>
+    <input type="text" id="display-name-input" placeholder="Como quer ser chamado(a)?">
+  </div>
+  <button class="primary" id="save-profile-btn">Salvar nome</button>
+  <span id="profile-msg" style="margin-left:10px; font-size:12px; color:var(--amber);"></span>
+
+  <div class="my-posts-grid">
+    <h3 style="font-weight:400; font-size:16px; color:var(--text-dim); margin-bottom:14px;">Minhas fotos</h3>
+    <div class="grid" id="my-photos-grid"></div>
+  </div>
+</div>
+
+<!-- ===== FIREBASE ===== -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, collection, collectionGroup, addDoc, setDoc, updateDoc, deleteDoc, doc, getDoc,
+    onSnapshot, orderBy, query, serverTimestamp, where
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB02cc2v6UhrMtSXgksb0he93064dqAzTw",
+    authDomain: "nossas-fotografias-velhos.firebaseapp.com",
+    projectId: "nossas-fotografias-velhos",
+    storageBucket: "nossas-fotografias-velhos.firebasestorage.app",
+    messagingSenderId: "544346329101",
+    appId: "1:544346329101:web:e6f24109b80587cde8c544"
+  };
+
+  const CLOUDINARY_CLOUD_NAME = "qxbomamt";
+  const CLOUDINARY_UPLOAD_PRESET = "mural_grupo";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // ---------- ELEMENTOS ----------
+  const authScreen = document.getElementById('auth-screen');
+  const bottomNav = document.getElementById('bottom-nav');
+  const userbar = document.getElementById('userbar');
+  const userEmailEl = document.getElementById('user-email');
+
+  const emailInput = document.getElementById('email-input');
+  const passwordInput = document.getElementById('password-input');
+  const authSubmitBtn = document.getElementById('auth-submit-btn');
+  const authMsg = document.getElementById('auth-msg');
+  const authTitle = document.getElementById('auth-title');
+  const authSub = document.getElementById('auth-sub');
+  const switchText = document.getElementById('switch-text');
+  const switchLink = document.getElementById('switch-link');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  const fileInput = document.getElementById('file-input');
+  const uploadBtn = document.getElementById('upload-btn');
+  const uploadProgress = document.getElementById('upload-progress');
+  const photoGrid = document.getElementById('photo-grid');
+  const photoCount = document.getElementById('photo-count');
+  const emptyState = document.getElementById('empty-state');
+  const searchInput = document.getElementById('search-input');
+  const sortSelect = document.getElementById('sort-select');
+
+  let mode = 'login';
+  let allPhotos = [];
+  let usuariosCache = {}; // uid -> {email, nome}
+  let currentThreadUid = null;
+
+  function showMsg(text, type){
+    authMsg.textContent = text;
+    authMsg.className = 'show ' + type;
+  }
+  function clearMsg(){ authMsg.className = ''; authMsg.textContent = ''; }
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  switchLink.addEventListener('click', () => {
+    mode = mode === 'login' ? 'signup' : 'login';
+    clearMsg();
+    if(mode === 'signup'){
+      authTitle.textContent = 'Criar conta';
+      authSub.textContent = 'Cadastre-se para ver e publicar fotos do grupo.';
+      authSubmitBtn.textContent = 'Cadastrar';
+      switchText.textContent = 'Já tem conta?';
+      switchLink.textContent = 'Entrar';
+    } else {
+      authTitle.textContent = 'Entrar';
+      authSub.textContent = 'Acesse com sua conta para ver e publicar fotos.';
+      authSubmitBtn.textContent = 'Entrar';
+      switchText.textContent = 'Ainda não tem conta?';
+      switchLink.textContent = 'Cadastre-se';
+    }
+  });
+
+  authSubmitBtn.addEventListener('click', async () => {
+    const email = emailInput.value.trim();
+    const pass = passwordInput.value;
+    if(!email || !pass){ showMsg('Preencha e-mail e senha.', 'error'); return; }
+    authSubmitBtn.disabled = true;
+    try{
+      if(mode === 'login'){
+        await signInWithEmailAndPassword(auth, email, pass);
+      } else {
+        await createUserWithEmailAndPassword(auth, email, pass);
+      }
+    } catch(err){
+      showMsg(traduzErro(err.code), 'error');
+    } finally {
+      authSubmitBtn.disabled = false;
+    }
+  });
+
+  function traduzErro(code){
+    const map = {
+      'auth/email-already-in-use': 'Este e-mail já está cadastrado.',
+      'auth/invalid-email': 'E-mail inválido.',
+      'auth/weak-password': 'A senha precisa ter pelo menos 6 caracteres.',
+      'auth/wrong-password': 'Senha incorreta.',
+      'auth/user-not-found': 'Usuário não encontrado.',
+      'auth/invalid-credential': 'E-mail ou senha incorretos.',
+    };
+    return map[code] || ('Erro: ' + code);
+  }
+
+  logoutBtn.addEventListener('click', () => signOut(auth));
+
+  onAuthStateChanged(auth, async (user) => {
+    if(user){
+      authScreen.style.display = 'none';
+      bottomNav.style.display = '';
+      userbar.style.display = 'flex';
+      userEmailEl.textContent = user.email;
+      await garantirUsuario(user);
+      escutarFotos();
+      escutarUsuarios();
+      escutarNotificacoes();
+      carregarPerfil();
+    } else {
+      authScreen.style.display = 'block';
+      bottomNav.style.display = 'none';
+      userbar.style.display = 'none';
+    }
+  });
+
+  // garante que existe um doc em 'usuarios' pra essa pessoa
+  async function garantirUsuario(user){
+    const ref = doc(db, 'usuarios', user.uid);
+    const snap = await getDoc(ref);
+    if(!snap.exists()){
+      await setDoc(ref, { email: user.email, nome: user.email.split('@')[0], criadoEm: serverTimestamp() });
+    }
+  }
+
+  // ---------- NAVEGAÇÃO ----------
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(btn.dataset.screen + '-screen').classList.add('active');
+      if(btn.dataset.screen === 'notifications'){
+        marcarNotificacoesVistas();
+      }
+    });
+  });
+
+  // ---------- UPLOAD DE FOTO ----------
+  uploadBtn.addEventListener('click', async () => {
+    const file = fileInput.files[0];
+    if(!file){ alert('Escolha uma foto primeiro.'); return; }
+    const user = auth.currentUser;
+    if(!user) return;
+    uploadBtn.disabled = true;
+    uploadProgress.style.display = 'inline';
+    uploadProgress.textContent = 'enviando...';
+    try{
+      const url = await enviarParaCloudinary(file);
+      const nome = usuariosCache[user.uid]?.nome || user.email.split('@')[0];
+      await addDoc(collection(db, 'fotos'), {
+        url, autor: user.email, autorUid: user.uid, autorNome: nome,
+        curtidas: {}, criadoEm: serverTimestamp()
+      });
+      fileInput.value = '';
+      uploadProgress.textContent = 'publicado ✓';
+      setTimeout(() => { uploadProgress.style.display = 'none'; }, 1500);
+    } catch(err){
+      uploadProgress.textContent = 'erro ao enviar';
+      console.error(err);
+    } finally {
+      uploadBtn.disabled = false;
+    }
+  });
+
+  async function enviarParaCloudinary(file){
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+    const res = await fetch(url, { method: 'POST', body: formData });
+    if(!res.ok) throw new Error('Falha no upload ao Cloudinary');
+    const data = await res.json();
+    return data.secure_url;
+  }
+
+  // ---------- GALERIA ----------
+  function escutarFotos(){
+    const q = query(collection(db, 'fotos'), orderBy('criadoEm', 'desc'));
+    onSnapshot(q, (snapshot) => {
+      allPhotos = [];
+      snapshot.forEach((d) => allPhotos.push({ id: d.id, ...d.data() }));
+      renderizarGaleria();
+      renderizarMinhasFotos();
+    });
+  }
+
+  searchInput.addEventListener('input', renderizarGaleria);
+  sortSelect.addEventListener('change', renderizarGaleria);
+
+  function renderizarGaleria(){
+    let lista = [...allPhotos];
+    const termo = searchInput.value.trim().toLowerCase();
+    if(termo){
+      lista = lista.filter(f => (f.autorNome || f.autor || '').toLowerCase().includes(termo));
+    }
+    if(sortSelect.value === 'curtidas'){
+      lista.sort((a,b) => Object.keys(b.curtidas||{}).length - Object.keys(a.curtidas||{}).length);
+    }
+    photoGrid.innerHTML = '';
+    if(lista.length === 0){
+      emptyState.style.display = 'block';
+      photoCount.textContent = '0 fotos';
+      return;
+    }
+    emptyState.style.display = 'none';
+    photoCount.textContent = allPhotos.length + (allPhotos.length === 1 ? ' foto' : ' fotos');
+    lista.forEach((data) => photoGrid.appendChild(criarCardFoto(data)));
+  }
+
+  function renderizarMinhasFotos(){
+    const grid = document.getElementById('my-photos-grid');
+    const user = auth.currentUser;
+    if(!user) return;
+    grid.innerHTML = '';
+    const minhas = allPhotos.filter(f => f.autorUid === user.uid);
+    minhas.forEach((data) => grid.appendChild(criarCardFoto(data, true)));
+  }
+
+  function criarCardFoto(data, simples){
+    const fotoId = data.id;
+    const user = auth.currentUser;
+    const curtidas = data.curtidas || {};
+    const jaCurtiu = user && curtidas[user.uid];
+    const souAutor = user && data.autorUid === user.uid;
+
+    const card = document.createElement('div');
+    card.className = 'photo-card';
+    card.innerHTML = `
+      <img src="${data.url}" loading="lazy" alt="Foto publicada por ${escapeHtml(data.autorNome||data.autor||'')}">
+      <div class="caption">
+        <span class="who">${escapeHtml(data.autorNome || (data.autor ? data.autor.split('@')[0] : 'anônimo'))}</span>
+        ${souAutor ? `<button class="delete-x" data-del-foto="${fotoId}">apagar</button>` : ''}
+      </div>
+      <div class="like-row">
+        <button class="like-btn ${jaCurtiu ? 'liked' : ''}" data-like-foto="${fotoId}">♥ curtir</button>
+        <span class="like-count">${Object.keys(curtidas).length}</span>
+      </div>
+      ${simples ? '' : `
+      <div class="comments-box">
+        <div class="comments-list" id="comments-${fotoId}"></div>
+        <div class="comment-form">
+          <input type="text" id="comment-input-${fotoId}" placeholder="Comentário...">
+          <button class="rec" data-rec-foto="${fotoId}">🎤</button>
+          <button data-foto-id="${fotoId}" class="btn-comentar">Enviar</button>
+        </div>
+      </div>`}
+    `;
+
+    card.querySelector('[data-like-foto]').addEventListener('click', () => curtirFoto(fotoId, jaCurtiu));
+    const delBtn = card.querySelector('[data-del-foto]');
+    if(delBtn) delBtn.addEventListener('click', () => apagarFoto(fotoId));
+
+    if(!simples){
+      card.querySelector('.btn-comentar').addEventListener('click', () => enviarComentario(fotoId));
+      card.querySelector('[data-rec-foto]').addEventListener('click', (e) => alternarGravacao(fotoId, e.target));
+      escutarComentarios(fotoId);
+    }
+    return card;
+  }
+
+  async function curtirFoto(fotoId, jaCurtiu){
+    const user = auth.currentUser;
+    if(!user) return;
+    const ref = doc(db, 'fotos', fotoId);
+    const foto = allPhotos.find(f => f.id === fotoId);
+    const curtidas = { ...(foto.curtidas || {}) };
+    if(jaCurtiu){ delete curtidas[user.uid]; } else { curtidas[user.uid] = true; }
+    await updateDoc(ref, { curtidas });
+  }
+
+  async function apagarFoto(fotoId){
+    if(!confirm('Apagar esta foto?')) return;
+    await deleteDoc(doc(db, 'fotos', fotoId));
+  }
+
+  // ---------- COMENTÁRIOS (texto e áudio) ----------
+  let gravando = {}; // fotoId -> {recorder, chunks}
+
+  function escutarComentarios(fotoId){
+    const q = query(collection(db, 'fotos', fotoId, 'comentarios'), orderBy('criadoEm', 'asc'));
+    onSnapshot(q, (snapshot) => {
+      const container = document.getElementById(`comments-${fotoId}`);
+      if(!container) return;
+      container.innerHTML = '';
+      snapshot.forEach((d) => {
+        const c = d.data();
+        const item = document.createElement('div');
+        item.className = 'comment-item';
+        if(c.tipo === 'audio'){
+          item.innerHTML = `<span class="c-who">${escapeHtml(c.autorNome||'')}:</span> <audio controls src="${c.url}"></audio>`;
+        } else {
+          item.innerHTML = `<span class="c-who">${escapeHtml(c.autorNome||'')}:</span> ${escapeHtml(c.texto||'')}`;
+        }
+        container.appendChild(item);
+      });
+      container.scrollTop = container.scrollHeight;
+    });
+  }
+
+  async function enviarComentario(fotoId){
+    const input = document.getElementById(`comment-input-${fotoId}`);
+    const texto = input.value.trim();
+    if(!texto) return;
+    const user = auth.currentUser;
+    if(!user) return;
+    input.value = '';
+    const nome = usuariosCache[user.uid]?.nome || user.email.split('@')[0];
+    try{
+      await addDoc(collection(db, 'fotos', fotoId, 'comentarios'), {
+        tipo: 'texto', texto, autor: user.email, autorNome: nome, criadoEm: serverTimestamp()
+      });
+    } catch(err){ console.error('Erro ao comentar:', err); }
+  }
+
+  async function alternarGravacao(fotoId, botao){
+    if(gravando[fotoId]){
+      gravando[fotoId].recorder.stop();
+      return;
+    }
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        stream.getTracks().forEach(t => t.stop());
+        delete gravando[fotoId];
+        botao.classList.remove('recording');
+        botao.textContent = '🎤';
+        await enviarComentarioAudio(fotoId, blob);
+      };
+      recorder.start();
+      gravando[fotoId] = { recorder, chunks };
+      botao.classList.add('recording');
+      botao.textContent = '⏹';
+    } catch(err){
+      alert('Não foi possível acessar o microfone.');
+      console.error(err);
+    }
+  }
+
+  async function enviarComentarioAudio(fotoId, blob){
+    const user = auth.currentUser;
+    if(!user) return;
+    const nome = usuariosCache[user.uid]?.nome || user.email.split('@')[0];
+    try{
+      const file = new File([blob], `audio_${Date.now()}.webm`, { type: 'audio/webm' });
+      const url = await enviarParaCloudinary(file);
+      await addDoc(collection(db, 'fotos', fotoId, 'comentarios'), {
+        tipo: 'audio', url, autor: user.email, autorNome: nome, criadoEm: serverTimestamp()
+      });
+    } catch(err){ console.error('Erro ao enviar áudio:', err); }
+  }
+
+  // ---------- USUÁRIOS / MENSAGENS PRIVADAS ----------
+  function escutarUsuarios(){
+    onSnapshot(collection(db, 'usuarios'), (snapshot) => {
+      usuariosCache = {};
+      snapshot.forEach((d) => { usuariosCache[d.id] = d.data(); });
+      renderizarListaPessoas();
+    });
+  }
+
+  function renderizarListaPessoas(){
+    const container = document.getElementById('people-container');
+    const user = auth.currentUser;
+    if(!container || !user) return;
+    container.innerHTML = '';
+    Object.entries(usuariosCache).forEach(([uid, info]) => {
+      if(uid === user.uid) return;
+      const row = document.createElement('div');
+      row.className = 'person-row';
+      row.innerHTML = `<span>${escapeHtml(info.nome || info.email)}</span>`;
+      const btn = document.createElement('button');
+      btn.className = 'small';
+      btn.textContent = 'Conversar';
+      btn.addEventListener('click', () => abrirConversa(uid, info.nome || info.email));
+      row.appendChild(btn);
+      container.appendChild(row);
+    });
+  }
+
+  function idConversa(uid1, uid2){ return [uid1, uid2].sort().join('_'); }
+
+  function abrirConversa(otherUid, otherNome){
+    currentThreadUid = otherUid;
+    document.getElementById('messages-list-view').style.display = 'none';
+    document.getElementById('general-chat-view').style.display = 'none';
+    document.getElementById('messages-thread-view').style.display = 'block';
+    document.getElementById('thread-title').textContent = otherNome;
+    escutarThread(otherUid);
+  }
+
+  document.getElementById('thread-back-btn').addEventListener('click', () => {
+    document.getElementById('messages-thread-view').style.display = 'none';
+    document.getElementById('messages-list-view').style.display = 'block';
+  });
+
+  document.getElementById('thread-send-btn').addEventListener('click', enviarMensagemPrivada);
+  document.getElementById('thread-input').addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') enviarMensagemPrivada();
+  });
+
+  async function enviarMensagemPrivada(){
+    const input = document.getElementById('thread-input');
+    const texto = input.value.trim();
+    const user = auth.currentUser;
+    if(!texto || !user || !currentThreadUid) return;
+    input.value = '';
+    const convId = idConversa(user.uid, currentThreadUid);
+    try{
+      await addDoc(collection(db, 'mensagens_privadas', convId, 'mensagens'), {
+        texto, autorUid: user.uid, autor: user.email, criadoEm: serverTimestamp()
+      });
+    } catch(err){ console.error(err); }
+  }
+
+  function escutarThread(otherUid){
+    const user = auth.currentUser;
+    const convId = idConversa(user.uid, otherUid);
+    const q = query(collection(db, 'mensagens_privadas', convId, 'mensagens'), orderBy('criadoEm', 'asc'));
+    onSnapshot(q, (snapshot) => {
+      const box = document.getElementById('thread-messages');
+      box.innerHTML = '';
+      snapshot.forEach((d) => {
+        const m = d.data();
+        const isMine = m.autorUid === user.uid;
+        const item = document.createElement('div');
+        item.className = 'chat-msg' + (isMine ? ' mine' : '');
+        item.innerHTML = `${escapeHtml(m.texto)}`;
+        box.appendChild(item);
+      });
+      box.scrollTop = box.scrollHeight;
+    });
+  }
+
+  // ---------- CHAT GERAL ----------
+  document.getElementById('open-general-chat-btn').addEventListener('click', () => {
+    document.getElementById('messages-list-view').style.display = 'none';
+    document.getElementById('general-chat-view').style.display = 'block';
+    escutarChatGeral();
+  });
+  document.getElementById('general-chat-back-btn').addEventListener('click', () => {
+    document.getElementById('general-chat-view').style.display = 'none';
+    document.getElementById('messages-list-view').style.display = 'block';
+  });
+  document.getElementById('chat-send-btn').addEventListener('click', enviarMensagemChat);
+  document.getElementById('chat-input').addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') enviarMensagemChat();
+  });
+
+  async function enviarMensagemChat(){
+    const input = document.getElementById('chat-input');
+    const texto = input.value.trim();
+    const user = auth.currentUser;
+    if(!texto || !user) return;
+    input.value = '';
+    const nome = usuariosCache[user.uid]?.nome || user.email.split('@')[0];
+    try{
+      await addDoc(collection(db, 'chat'), { texto, autor: user.email, autorNome: nome, criadoEm: serverTimestamp() });
+    } catch(err){ console.error(err); }
+  }
+
+  let chatGeralListenerAtivo = false;
+  function escutarChatGeral(){
+    if(chatGeralListenerAtivo) return;
+    chatGeralListenerAtivo = true;
+    const q = query(collection(db, 'chat'), orderBy('criadoEm', 'asc'));
+    onSnapshot(q, (snapshot) => {
+      const box = document.getElementById('chat-messages');
+      box.innerHTML = '';
+      const user = auth.currentUser;
+      snapshot.forEach((d) => {
+        const m = d.data();
+        const isMine = user && m.autor === user.email;
+        const item = document.createElement('div');
+        item.className = 'chat-msg' + (isMine ? ' mine' : '');
+        item.innerHTML = `<span class="who">${escapeHtml(m.autorNome||'')}</span>${escapeHtml(m.texto)}`;
+        box.appendChild(item);
+      });
+      box.scrollTop = box.scrollHeight;
+    });
+  }
+
+  // ---------- NOTIFICAÇÕES ----------
+  function chaveVisto(){ return 'mural_ultimo_visto_' + (auth.currentUser?.uid || ''); }
+
+  function escutarNotificacoes(){
+    const q = query(collection(db, 'fotos'), orderBy('criadoEm', 'desc'));
+    onSnapshot(q, (snapshot) => {
+      const lista = [];
+      snapshot.forEach((d) => {
+        const f = d.data();
+        if(f.criadoEm) lista.push({ tipo:'foto', nome: f.autorNome || f.autor, tempo: f.criadoEm.toMillis ? f.criadoEm.toMillis() : Date.now() });
+      });
+      renderizarNotificacoes(lista);
+    });
+  }
+
+  function renderizarNotificacoes(lista){
+    const ultimoVisto = Number(localStorage.getItem(chaveVisto()) || 0);
+    const container = document.getElementById('notif-list');
+    const empty = document.getElementById('notif-empty');
+    const badge = document.getElementById('notif-badge');
+    container.innerHTML = '';
+    if(lista.length === 0){ empty.style.display='block'; badge.style.display='none'; return; }
+    empty.style.display = 'none';
+
+    let naoLidas = 0;
+    lista.slice(0, 30).forEach((n) => {
+      const unread = n.tempo > ultimoVisto;
+      if(unread) naoLidas++;
+      const item = document.createElement('div');
+      item.className = 'notif-item' + (unread ? ' unread' : '');
+      item.innerHTML = `<span>${escapeHtml(n.nome)} publicou uma nova foto</span><span class="time">${new Date(n.tempo).toLocaleString('pt-BR')}</span>`;
+      container.appendChild(item);
+    });
+
+    if(naoLidas > 0){
+      badge.style.display = 'flex';
+      badge.textContent = naoLidas > 9 ? '9+' : naoLidas;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  function marcarNotificacoesVistas(){
+    localStorage.setItem(chaveVisto(), String(Date.now()));
+    document.getElementById('notif-badge').style.display = 'none';
+    document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+  }
+
+  // ---------- PERFIL ----------
+  async function carregarPerfil(){
+    const user = auth.currentUser;
+    if(!user) return;
+    const snap = await getDoc(doc(db, 'usuarios', user.uid));
+    if(snap.exists()){
+      document.getElementById('display-name-input').value = snap.data().nome || '';
+    }
+  }
+
+  document.getElementById('save-profile-btn').addEventListener('click', async () => {
+    const user = auth.currentUser;
+    if(!user) return;
+    const nome = document.getElementById('display-name-input').value.trim();
+    if(!nome) return;
+    await setDoc(doc(db, 'usuarios', user.uid), { email: user.email, nome, criadoEm: serverTimestamp() }, { merge: true });
+    document.getElementById('profile-msg').textContent = 'Salvo ✓';
+    setTimeout(() => { document.getElementById('profile-msg').textContent = ''; }, 2000);
+  });
+</script>
+</body>
+</html>
